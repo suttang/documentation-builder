@@ -53,11 +53,7 @@ make:watch() {
 }
 
 make:pdf() {
-    docker-compose run --rm docs-printer
-}
-
-tarou() {
-    echo "taroudesu"
+    docker-compose run --rm docs-printer && docker-compose down
 }
 
 help() {
@@ -67,8 +63,6 @@ help() {
     echo "========"
     echo "    make:pdf             - Create PDF files from HTML"
 }
-
-# echo $(command -V "$ACTION")
 
 # [ "$(command -V "$ACTION" | grep ' function$')" = "" ] \
 #     && help "action not found" \

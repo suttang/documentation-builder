@@ -1,6 +1,17 @@
 ## Initialize
 
 ```
-docker-compose run docs-sphinx /scripts/init.sh
+./manage setup
 ```
 
+## Make HTML
+
+```
+./manage make:html
+```
+
+## Make PDF
+
+```
+./manage make:pdf
+```
