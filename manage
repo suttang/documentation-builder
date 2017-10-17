@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# https://github.com/pointhi/kicad-footprint-generator/blob/master/manage.sh
+# https://github.com/autopilotpattern/redis/blob/master/bin/manage.sh
+
+BASE_DIR=$(cd $(dirname $0); pwd)
+APPS_DIR=$BASE_DIR/apps
+APP_WATCHER_DIR=$APPS_DIR/watcher
+
+set -e
+
+# exec "$@"
+
+ACTION="$1"
+
+setup() {
+    # clean up
+    if [ -e $APP_WATCHER_DIR ]; then
+        rm -rf $APP_WATCHER_DIR
+    fi
+
+    # create applications dir
+    mkdir $APP_WATCHER_DIR
+
+    # download auto builder
+    curl -kOL https://github.com/suttang/docker-sphinx-rtd-theme-auto-build/archive/master.tar.gz
+    tar -zxvf master.tar.gz
+    mv docker-sphinx-rtd-theme-auto-build-master $APP_WATCHER_DIR
+    rm master.tar.gz
+    
+    cd $APP_WATCHER_DIR
+    npm install
+    rm -rf $APP_WATCHER_DIR/documents
+
+    # create docker images
+    docker-compose build
+}
+
+make:html() {
+    docker-compose run --rm docs-builder
+}
+
+make:watch() {
+    local BUILD="docker run --rm -t -v $BASE_DIR/docs:/documents suttang/sphinx-rtd-theme"
+    local SRC="$BASE_DIR/docs/source"
+    local DIST="$BASE_DIR/docs/build"
+    cd $APP_WATCHER_DIR
+    SRC=$SR DIST=$DIST BUILD=$BUILD npm run build:dev
+}
+
+make:pdf() {
+    docker-compose run --rm docs-printer
+}
+
+tarou() {
+    echo "taroudesu"
+}
+
+help() {
+    [ -z "$1" ] || printf 'Error: %s\n' "$1"
+    echo "Searx manage help"
+    echo "Commands"
+    echo "========"
+    echo "    make:pdf             - Create PDF files from HTML"
+}
+
+# echo $(command -V "$ACTION")
+
+# [ "$(command -V "$ACTION" | grep ' function$')" = "" ] \
+#     && help "action not found" \
+#     || "$ACTION" "$2"
+if [ -n "$(type -t $ACTION)" ] && [ "$(type -t $ACTION)" = function ]; then
+     $ACTION
+ else
+     help "action not found"
+fi

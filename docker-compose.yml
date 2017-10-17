@@ -1,0 +1,31 @@
+---
+
+version: '3'
+
+services:
+  docs-builder:
+    image: suttang/sphinx-rtd-theme
+    container_name: docs-builder
+    volumes:
+      - ./docs:/documents
+
+  docs-server:
+    image: suttang/http-server
+    container_name: docs-server
+    volumes:
+      - ./docs/build:/docroot
+    ports:
+      - 8500:80
+    depends_on:
+      - docs-builder
+    
+  docs-printer:
+    image: suttang/site-to-pdf
+    container_name: docs-printer
+    volumes:
+      - ./docs/pdf:/pdf
+    environment:
+      ENTRY_POINT: http://docs-server/
+      DEST: /pdf
+    depends_on:
+      - docs-server
