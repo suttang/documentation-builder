@@ -1,3 +1,6 @@
 .DS_Store
 .vscode
+.apps
 node_modules
+docs/build
+docs/pdf
