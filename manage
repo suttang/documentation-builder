@@ -1,74 +1,50 @@
-#!/bin/bash
-
-# https://github.com/pointhi/kicad-footprint-generator/blob/master/manage.sh
-# https://github.com/autopilotpattern/redis/blob/master/bin/manage.sh
-
-BASE_DIR=$(cd $(dirname $0); pwd)
-APPS_DIR=$BASE_DIR/.apps
-APP_WATCHER_DIR=$APPS_DIR/watcher
-
-set -e
-
-# exec "$@"
+#!/bin/sh
 
 ACTION="$1"
 
-setup() {
-    if [ ! -e $APPS_DIR ]; then
-        mkdir $APPS_DIR
+init() ## Initialize-your-sphinx-document
+{
+    type docker-compose >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "docker-composeないよ"
+        exit 1
     fi
 
-    # clean up
-    if [ -e $APP_WATCHER_DIR ]; then
-        rm -rf $APP_WATCHER_DIR
+    read -p "Input your project name: " Project
+    read -p "Input author name: " Author
+    docker-compose run --rm docs-builder sphinx-quickstart -q -p ${Project} -a ${Author} -v 1.0.0 --sep --no-batchfile
+}
+
+watch() ## Watch-files-and-automatically-refresh-your-browser
+{
+    docker-compose run --rm docs-builder sphinx-autobuild -b html source build/html -H 0.0.0.0
+    type open >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        open http://localhost:8000
     fi
-
-    # download auto builder
-    curl -kOL https://github.com/suttang/docker-sphinx-rtd-theme-auto-build/archive/master.tar.gz
-    tar -zxvf master.tar.gz
-    mv docker-sphinx-rtd-theme-auto-build-master $APP_WATCHER_DIR
-    rm master.tar.gz
-    
-    cd $APP_WATCHER_DIR
-    npm install
-    rm -rf $APP_WATCHER_DIR/documents
-
-    # create docker images
-    docker-compose build
-
-    # init documents
-    docker-compose run --rm docs-builder /scripts/init.sh
 }
 
-make:html() {
-    docker-compose run --rm docs-builder
-}
-
-make:pdf() {
-    docker-compose run --rm docs-printer && docker-compose down
-}
-
-watch() {
-    local BUILD="docker-compose run --rm docs-builder"
-    local SRC="$BASE_DIR/docs/source"
-    local DIST="$BASE_DIR/docs/build"
-    cd $APP_WATCHER_DIR
-    SRC=$SRC DIST=$DIST BUILD=$BUILD npm run build:dev
-}
-
-help() {
+help() ## Show-this-help-text
+{
     [ -z "$1" ] || printf 'Error: %s\n' "$1"
-    echo "Searx manage help"
-    echo "Commands"
-    echo "========"
-    echo "    make:pdf             - Create PDF files from HTML"
+    echo
+
+    echo '\033[33mUsage:\033[m'
+    echo " ./manage [command]"
+    echo
+
+    echo '\033[33mCommands:\033[m'
+    # grep "^function.*##" $0 | sed -e 's/ \{1,\}/ /g;s/function //;s/() ## / /' | awk '{printf "\033[36m%-30s\033[0m %s\n", $1, $2}'
+    grep -E '^(function\s+)?\w+\(\)\s+\{?\s*##' $0 | sed -e 's/{//;s/ \{1,\}/ /g;s/function //;s/() ## / /' | awk '{printf " \033[36m%-20s\033[0m %s\n", $1, $2}'
+
 }
 
-# [ "$(command -V "$ACTION" | grep ' function$')" = "" ] \
-#     && help "action not found" \
-#     || "$ACTION" "$2"
 if [ -n "$(type -t $ACTION)" ] && [ "$(type -t $ACTION)" = function ]; then
-     $ACTION
+     $ACTION $@
  else
      help "action not found"
 fi
+
+# Refs:
+# シェルスクリプトの出力に色をつけたい！
+# https://qiita.com/dojineko/items/49aa30018bb721b0b4a9
