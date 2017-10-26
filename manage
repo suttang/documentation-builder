@@ -44,16 +44,16 @@ make:html() {
     docker-compose run --rm docs-builder
 }
 
-make:watch() {
-    local BUILD="docker run --rm -t -v $BASE_DIR/docs:/documents suttang/sphinx-rtd-theme"
+make:pdf() {
+    docker-compose run --rm docs-printer && docker-compose down
+}
+
+watch() {
+    local BUILD="docker-compose run --rm docs-builder"
     local SRC="$BASE_DIR/docs/source"
     local DIST="$BASE_DIR/docs/build"
     cd $APP_WATCHER_DIR
-    SRC=$SR DIST=$DIST BUILD=$BUILD npm run build:dev
-}
-
-make:pdf() {
-    docker-compose run --rm docs-printer && docker-compose down
+    SRC=$SRC DIST=$DIST BUILD=$BUILD npm run build:dev
 }
 
 help() {

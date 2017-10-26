@@ -6,6 +6,8 @@ services:
   docs-builder:
     image: suttang/sphinx-rtd-theme
     container_name: docs-builder
+    ports:
+      - 8000:8000
     volumes:
       - ./docs:/documents
 
@@ -14,8 +16,6 @@ services:
     container_name: docs-server
     volumes:
       - ./docs/build:/docroot
-    ports:
-      - 8500:80
     depends_on:
       - docs-builder
     
